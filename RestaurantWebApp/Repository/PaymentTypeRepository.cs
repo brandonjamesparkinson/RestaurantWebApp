@@ -9,7 +9,7 @@ namespace RestaurantWebApp.Repository
 {
     public class PaymentTypeRepository
     {
-        RestaurantDBEntities objRestaurantDbEntities;
+        private RestaurantDBEntities objRestaurantDbEntities;
 
         public PaymentTypeRepository()
         {
