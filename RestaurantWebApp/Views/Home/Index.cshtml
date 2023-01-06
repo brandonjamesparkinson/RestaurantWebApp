@@ -19,10 +19,67 @@
             CalculateSubTotal();
         });
 
+        $("input[type=text]").keyup(function () {
+            CalculateBalance();
+        });
+
         $("#btnAddToList").click(function () {
             AddToTheItemList();
         });
+
+        $("'#btnPayment").click(function () {
+            FinalPayment();
+        });
     });
+
+    function FinalPayment() {
+        var objOrderViewModel = {};
+        var ListOfOrderDetailViewModel = new Array();
+        //ListOfOrderDetailViewModel
+        objOrderViewModel.PaymentTypeId = $('#PaymentType').val();
+        objOrderViewModel.CustomerId = $('#Customer').val();
+        objOrderViewModel.FinalTotal = $('#txtFinalTotal').val();
+
+        $('#tblRestaurantItemList').find('tr:gt(0)').each(function () {
+            var OrderDetailViewModel = {};
+            OrderDetailViewModel.Total = parseFloat($(this).find('td:eq(5)').text());
+            OrderDetailViewModel.ItemId = parseFloat($(this).find('td:eq(0)').text());
+            OrderDetailViewModel.UnitPrice = parseFloat($(this).find('td:eq(2)').text());
+            OrderDetailViewModel.Quantity = parseFloat($(this).find('td:eq(3)').text());
+            OrderDetailViewModel.Discount = parseFloat($(this).find('td:eq(4)').text());
+            ListOfOrderDetailViewModel.push(OrderDetailViewModel);
+        });
+        objOrderViewModel.ListOfOrderDetailViewModel = ListOfOrderDetailViewModel;
+
+        $.ajax({
+            async: true,
+            type: 'POST',
+            dataType: 'JSON',
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(objOrderViewModel),
+            url: '/Home/Index',
+            success: function (data) {
+
+            },
+            error: function () {
+                alert("There was an error adding the payment data.");
+            }
+        });
+    }
+
+    function CalculateBalance() {
+        var FinalAmount = $('#txtPaymentTotal').val();
+        var PaymentAmount = $('#txtPaymentAmount').val();
+        var ReturnAmount = $('#txtReturnTotal').val();
+        var BalanceAmount = parseFloat(FinalAmount) - parseFloat(PaymentAmount) + ReturnAmount;
+        $('#txtBalance').val(parseFloat(BalanceAmount).toFixed(2));
+        if (parseFloat(BalanceAmount) == 0) {
+            $('#btnPayment').removeAttr('disabled');
+        }
+        else {
+            $('#btnPayment').attr('disabled', 'disabled');
+        }
+    }
 
     function RemoveItem(itemId) {
         $(itemId).closest('tr').remove();
@@ -57,6 +114,8 @@
             FinalTotal += Total;
         });
         $('#txtFinalTotal').val(parseFloat(FinalTotal).toFixed(2));
+        $('#txtPaymentTotal').val(parseFloat(FinalTotal).toFixed(2));
+        $('#txtBalance').val(parseFloat(FinalTotal).toFixed(2));
     }
 
     function ResetItem() {
@@ -96,6 +155,25 @@
 </script>
 
 <style>
+    .modal {
+        text-align: center;
+        padding: 0 !important;
+    }
+
+    .modal:before {
+        content: '';
+        display: inline-block;
+        height: 100%;
+        vertical-align: middle;
+        margin-right: -4px;
+    }
+
+    .modal-dialog {
+        display: inline-block;
+        text-align: left;
+        vertical-align: middle;
+    }
+
     fieldset {
         border: 1px solid #ddd !important;
         margin: 0;
@@ -145,7 +223,7 @@
             <div class="col-md-4">
                 <div class="form-group">
                     Final Total:
-                    <input style="text-align: right" type="text" value="0.00" name="FinalTotal" readonly="readonly" id="txtFinalTotal" class="form-control"/>
+                    <input style="text-align: right" type="text" value="0.00" name="FinalTotal" readonly="readonly" id="txtFinalTotal" class="form-control" />
                 </div>
             </div>
 
@@ -237,10 +315,10 @@
 </fieldset>
 
 <div class="mt-3" style="float:right">
-    <input data-backdrop="static" data-keydrop="false" data-bs-toggle="modal" data-bs-target="#divPayment" type="button" value="Check Out" name="CheckOut" id="btnCheckOut"
+    <input data-bs-backdrop="static" data-bs-keydrop="false" data-bs-toggle="modal" data-bs-target="#divPayment" type="button" value="Check Out" name="CheckOut" id="btnCheckOut"
            class="btn btn-primary" />
 
-    <input  type="button" value="Reset" name="Reset" id="btnReset"
+    <input type="button" value="Reset" name="Reset" id="btnReset"
            class="btn btn-danger" />
 </div>
 
@@ -277,7 +355,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button id="btnPayment" class="btn btn-success" value="Payment">Payment</button>
+                <button id="btnPayment" disabled='disabled' class="btn btn-success" value="Payment">Payment</button>
                 <button id="btnClose" data-bs-dismiss="modal" class="btn btn-danger" value="Close">Close</button>
             </div>
         </div>
